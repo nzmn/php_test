@@ -45,9 +45,6 @@ function dataValidate($dataArr): array
 {
     $new_datalist = [];
     for ($i = 1; $i <= count($dataArr); $i++) {
-        //$new_datalist[$i]['name'] = ucfirst(strtolower(trim($dataArr[$i]['name'], " \t\n\r\0\!\ ")));
-        //$new_datalist[$i]['surename'] = ucfirst(strtolower(trim($dataArr[$i]['surename'], " \t\n\r \!\ ")));
-        //$new_datalist[$i]['email'] = strtolower(trim($dataArr[$i]['email'], " \t\n\r \!\ "));
         $new_datalist[$i]['name'] = ucfirst(strtolower(trim($dataArr[$i]['name'], " \t\n\r\0\ ")));
         $new_datalist[$i]['surename'] = ucfirst(strtolower(trim($dataArr[$i]['surename'], " \t\n\r\ ")));
         $new_datalist[$i]['email'] = strtolower(trim($dataArr[$i]['email'], " \t\n\r\ "));
@@ -96,7 +93,7 @@ function getDBConnection($host, $user, $password)
  *
  * @param mysqli $con
  */
-function createDatabase($con)
+function createDB($con)
 {
     if (mysqli_query($con, "CREATE DATABASE IF NOT EXISTS my_db")) {
         echo "Database created.\n";
@@ -105,12 +102,12 @@ function createDatabase($con)
     }
 }
 /**
- *Create a table in MySQL *
+ *Create a table in MySQL
  * @param mysqli $con
  */
 function createTable($con)
 {
-    $sql = "    
+    $sql= "    
         CREATE TABLE IF NOT EXISTS users (
           id int(6) unsigned NOT NULL AUTO_INCREMENT,
           Name varchar(20) NOT NULL,
@@ -120,9 +117,30 @@ function createTable($con)
           UNIQUE KEY (Email)
         );";
     if ($con->query($sql) === TRUE) {
-        echo "Table users created successfully\n";
+        echo "Table users created successfully.\n";
     } else {
         echo "Failed to create table users: " . $con->error;
+    }
+}
+
+/**
+ *Insert values(name, surename, email) into the table
+ *
+ * @param mysqli $con
+ * @param array $d_list
+ */
+function insertValues($con, $d_list)
+{
+    foreach ($d_list as $value) {
+        $stmt = $con->prepare(/** @lang text */
+            "INSERT INTO users(Name, Surename, Email) VALUES (?,?,?)");
+        $stmt->bind_param('sss', $value['name'], $value['surename'], $value['email']);
+        $success = $stmt->execute();
+    }
+    if ($success) {
+        echo "Succeeded to insert Values.";
+    } else {
+        echo "Failed to insert Values.";
     }
 }
 
@@ -131,11 +149,11 @@ $data_list = [];
 $data_list = openAndReadFile($file);
 $data_list = dataValidate($data_list);
 $data_list = emailValidate($data_list);
-var_dump($data_list);
 $conn = getDBConnection('localhost', 'root', '');
-createDatabase($conn);
+createDB($conn);
 mysqli_select_db($conn, "my_db");
 createTable($conn);
+insertValues($conn, $data_list);
 mysqli_close($conn);
 
 
